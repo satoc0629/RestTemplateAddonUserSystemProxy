@@ -4,6 +4,7 @@
 package RestTemplateAddonUserSystemProxy;
 
 import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.SystemDefaultCredentialsProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;

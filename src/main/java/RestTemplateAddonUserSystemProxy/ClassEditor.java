@@ -15,7 +15,7 @@ public class ClassEditor extends ExprEditor {
         try {
             CtConstructor ctConstructor = c.getConstructor();
 
-            ctConstructor.insertBeforeBody(
+            ctConstructor.insertAfter(
                             (ctConstructor.callsSuper() ? "" : "super();") +
                             "this.setRequestFactory(new org.springframework.http.client.HttpComponentsClientHttpRequestFactory(" +
                             "                org.apache.http.impl.client.HttpClientBuilder.create()" +
