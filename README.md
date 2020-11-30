@@ -26,7 +26,25 @@ https://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/htt
 ## 利用方法
 PJルートにあるRestTemplateAddonUserSystemProxy.jarをダウンロードし、  
 IDEの実行構成のJVM引数もしくはIDEそのもののJVM引数に以下を設定してください。  
-※Windowsならパスは""で囲ってください。
+※Windowsならパスの先頭はドライブレターを記載してから絶対パスを設定してください。
 ```
 -javaagent:/配置パス/RestTemplateAddonUserSystemProxy.jar
+-javaagent:C:/RestTemplateAddonUserSystemProxy.jar
+-javaagent:./RestTemplateAddonUserSystemProxy.jar
 ```
+
+### 実現方法
+javaassitにより実現しています。
+具体的には行ったことは、
+1. RestTemplateのコンストラクタの改造
+2. 1.で対応できなかったコンストラクタの考慮
+3. HTTPS接続時の接続先証明書チェックの廃止
+
+#### 1.RestTemplateのコンストラクタの改造
+
+
+### 注意点
+Developer環境での利用を推奨します。
+
+#### 参考サイト
+[Java × Spring Boot のlocal環境でのProxy設定とSSL証明書の無視](https://kcf-developers.hatenablog.jp/entry/2018/09/04/112933)

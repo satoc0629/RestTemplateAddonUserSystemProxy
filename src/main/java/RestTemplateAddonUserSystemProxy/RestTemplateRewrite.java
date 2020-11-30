@@ -6,13 +6,17 @@ package RestTemplateAddonUserSystemProxy;
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
+import javassist.CtConstructor;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
+import java.util.Objects;
 
 public class RestTemplateRewrite {
     public static void premain(String agentArgs, Instrumentation instrumentation) {
@@ -24,7 +28,25 @@ public class RestTemplateRewrite {
                     ByteArrayInputStream stream = new ByteArrayInputStream(classfileBuffer);
                     try {
                         CtClass ctClass = classPool.makeClass(stream);
-                        ctClass.instrument(new ClassEditor());
+
+                        CtConstructor[] constructors = ctClass.getDeclaredConstructors();
+                        for (CtConstructor ctConstructor : constructors) {
+                            try (BufferedReader br = new BufferedReader(
+                                    new InputStreamReader(
+                                            Objects.requireNonNull(ClassLoader.getSystemResourceAsStream("bodySource.txt"))))) {
+
+                                StringBuilder sb = new StringBuilder();
+                                while (br.ready()) {
+                                    sb.append(br.readLine());
+                                }
+
+                                ctConstructor.insertBeforeBody(
+                                        sb.toString()
+                                );
+
+                            }
+                        }
+
                         return ctClass.toBytecode();
                     } catch (IOException | CannotCompileException e) {
                         e.printStackTrace();
@@ -43,7 +65,25 @@ public class RestTemplateRewrite {
                     ByteArrayInputStream stream = new ByteArrayInputStream(classfileBuffer);
                     try {
                         CtClass ctClass = classPool.makeClass(stream);
-                        ctClass.instrument(new ClassEditor());
+
+                        CtConstructor[] constructors = ctClass.getDeclaredConstructors();
+                        for (CtConstructor ctConstructor : constructors) {
+                            try (BufferedReader br = new BufferedReader(
+                                    new InputStreamReader(
+                                            Objects.requireNonNull(ClassLoader.getSystemResourceAsStream("bodySource.txt"))))) {
+
+                                StringBuilder sb = new StringBuilder();
+                                while (br.ready()) {
+                                    sb.append(br.readLine());
+                                }
+
+                                ctConstructor.insertBeforeBody(
+                                        sb.toString()
+                                );
+
+                            }
+                        }
+
                         return ctClass.toBytecode();
                     } catch (IOException | CannotCompileException e) {
                         e.printStackTrace();
