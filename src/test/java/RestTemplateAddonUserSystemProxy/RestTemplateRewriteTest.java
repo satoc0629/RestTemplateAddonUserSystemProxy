@@ -8,6 +8,8 @@ import org.apache.http.impl.client.SystemDefaultCredentialsProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.converter.FormHttpMessageConverter;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.client.RestTemplate;
 
@@ -144,6 +146,14 @@ public class RestTemplateRewriteTest {
         ResponseEntity<String> response = restTemplate.getForEntity(URI.create("https://google.com"), String.class);
 
         assertEquals(200, response.getStatusCodeValue());
+    }
+    @Test
+    public void test3() {
+        RestTemplate restTemplate = new RestTemplate(List.of(new StringHttpMessageConverter()));
+        String response =
+                restTemplate.getForObject(URI.create("https://google.com"), String.class);
+
+        assertNotNull(response);
     }
 
     private Object getPrivateFinalField(Class t, Object instance, String fieldName) {
