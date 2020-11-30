@@ -14,6 +14,7 @@ import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.client.RestTemplate;
 
+import javax.net.ssl.TrustManager;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
@@ -33,94 +34,95 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 
 public class RestTemplateRewriteTest {
+    Instrumentation instrument = new Instrumentation() {
+        @Override
+        public void addTransformer(ClassFileTransformer transformer, boolean canRetransform) {
+
+        }
+
+        @Override
+        public void addTransformer(ClassFileTransformer transformer) {
+
+        }
+
+        @Override
+        public boolean removeTransformer(ClassFileTransformer transformer) {
+            return false;
+        }
+
+        @Override
+        public boolean isRetransformClassesSupported() {
+            return false;
+        }
+
+        @Override
+        public void retransformClasses(Class<?>... classes) throws UnmodifiableClassException {
+
+        }
+
+        @Override
+        public boolean isRedefineClassesSupported() {
+            return false;
+        }
+
+        @Override
+        public void redefineClasses(ClassDefinition... definitions) throws ClassNotFoundException, UnmodifiableClassException {
+
+        }
+
+        @Override
+        public boolean isModifiableClass(Class<?> theClass) {
+            return false;
+        }
+
+        @Override
+        public Class[] getAllLoadedClasses() {
+            return new Class[]{RestTemplate.class};
+        }
+
+        @Override
+        public Class[] getInitiatedClasses(ClassLoader loader) {
+            return new Class[]{RestTemplate.class};
+        }
+
+        @Override
+        public long getObjectSize(Object objectToSize) {
+            return 1;
+        }
+
+        @Override
+        public void appendToBootstrapClassLoaderSearch(JarFile jarfile) {
+
+        }
+
+        @Override
+        public void appendToSystemClassLoaderSearch(JarFile jarfile) {
+
+        }
+
+        @Override
+        public boolean isNativeMethodPrefixSupported() {
+            return false;
+        }
+
+        @Override
+        public void setNativeMethodPrefix(ClassFileTransformer transformer, String prefix) {
+
+        }
+
+        @Override
+        public void redefineModule(Module module, Set<Module> extraReads, Map<String, Set<Module>> extraExports, Map<String, Set<Module>> extraOpens, Set<Class<?>> extraUses, Map<Class<?>, List<Class<?>>> extraProvides) {
+
+        }
+
+        @Override
+        public boolean isModifiableModule(Module module) {
+            return false;
+        }
+    };
     @Test
     public void test() {
-        Instrumentation instrument = new Instrumentation() {
-            @Override
-            public void addTransformer(ClassFileTransformer transformer, boolean canRetransform) {
 
-            }
-
-            @Override
-            public void addTransformer(ClassFileTransformer transformer) {
-
-            }
-
-            @Override
-            public boolean removeTransformer(ClassFileTransformer transformer) {
-                return false;
-            }
-
-            @Override
-            public boolean isRetransformClassesSupported() {
-                return false;
-            }
-
-            @Override
-            public void retransformClasses(Class<?>... classes) throws UnmodifiableClassException {
-
-            }
-
-            @Override
-            public boolean isRedefineClassesSupported() {
-                return false;
-            }
-
-            @Override
-            public void redefineClasses(ClassDefinition... definitions) throws ClassNotFoundException, UnmodifiableClassException {
-
-            }
-
-            @Override
-            public boolean isModifiableClass(Class<?> theClass) {
-                return false;
-            }
-
-            @Override
-            public Class[] getAllLoadedClasses() {
-                return new Class[]{RestTemplate.class};
-            }
-
-            @Override
-            public Class[] getInitiatedClasses(ClassLoader loader) {
-                return new Class[]{RestTemplate.class};
-            }
-
-            @Override
-            public long getObjectSize(Object objectToSize) {
-                return 1;
-            }
-
-            @Override
-            public void appendToBootstrapClassLoaderSearch(JarFile jarfile) {
-
-            }
-
-            @Override
-            public void appendToSystemClassLoaderSearch(JarFile jarfile) {
-
-            }
-
-            @Override
-            public boolean isNativeMethodPrefixSupported() {
-                return false;
-            }
-
-            @Override
-            public void setNativeMethodPrefix(ClassFileTransformer transformer, String prefix) {
-
-            }
-
-            @Override
-            public void redefineModule(Module module, Set<Module> extraReads, Map<String, Set<Module>> extraExports, Map<String, Set<Module>> extraOpens, Set<Class<?>> extraUses, Map<Class<?>, List<Class<?>>> extraProvides) {
-
-            }
-
-            @Override
-            public boolean isModifiableModule(Module module) {
-                return false;
-            }
-        };
         RestTemplateRewrite.premain(null, instrument);
 
         RestTemplate restTemplate = new RestTemplate();
@@ -143,6 +145,8 @@ public class RestTemplateRewriteTest {
 
     @Test
     public void test2() {
+        RestTemplateRewrite.premain(null, instrument);
+
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<String> response = restTemplate.getForEntity(URI.create("https://google.com"), String.class);
 
@@ -150,7 +154,45 @@ public class RestTemplateRewriteTest {
     }
     @Test
     public void test3() {
+        RestTemplateRewrite.premain(null, instrument);
+
         RestTemplate restTemplate = new RestTemplate(List.of(new StringHttpMessageConverter()));
+        String response =
+                restTemplate.getForObject(URI.create("https://google.com"), String.class);
+
+        assertNotNull(response);
+    }
+
+    @Test
+    public void test4() {
+
+        final javax.net.ssl.SSLContext sslContext;
+        try {
+            sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
+            javax.net.ssl.TrustManager trustManager =
+                    new RestTemplateAddonUserSystemProxy.TrustManagerInstant();
+            sslContext.init(null, new javax.net.ssl.TrustManager[]{
+                    trustManager
+            }, null);
+        } catch (java.security.KeyManagementException e) {
+            throw new java.lang.RuntimeException("sslContext init failed.", e);
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new java.lang.RuntimeException("sslContext init failed.", e);
+        }
+
+        RestTemplateAddonUserSystemProxy.X509HostnameVerifierInstant localHostnameVerifier =
+                new RestTemplateAddonUserSystemProxy.X509HostnameVerifierInstant();
+        javax.net.ssl.HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
+        javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier(localHostnameVerifier);
+
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.setRequestFactory(new org.springframework.http.client.HttpComponentsClientHttpRequestFactory(
+                org.apache.http.impl.client.HttpClientBuilder.create()
+                        .useSystemProperties()
+                        .setSSLContext(sslContext)
+                        .build()
+        ));
+
         String response =
                 restTemplate.getForObject(URI.create("https://google.com"), String.class);
 
@@ -173,4 +215,6 @@ public class RestTemplateRewriteTest {
         }
         return null;
     }
+
+
 }
