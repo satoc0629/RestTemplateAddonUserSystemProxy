@@ -38,6 +38,7 @@ dependencies {
 }
 
 jar {
+    enabled true
     manifest.attributes 'Premain-Class': 'RestTemplateAddonUserSystemProxy.RestTemplateRewrite'
     from configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) }
 }
