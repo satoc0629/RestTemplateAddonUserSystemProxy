@@ -1,3 +1,4 @@
+![Java CI with Gradle](https://github.com/siersetup/RestTemplateAddonUserSystemProxy/workflows/Java%20CI%20with%20Gradle/badge.svg)
 # RestTemplateAddonUserSystemProxy
 ## 背景
 Spring Securityで多用される`org.springframework.web.client.RestTemplate`は、Proxy環境下に対応していません。  
