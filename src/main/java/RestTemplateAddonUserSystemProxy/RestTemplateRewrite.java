@@ -3,10 +3,7 @@
  */
 package RestTemplateAddonUserSystemProxy;
 
-import javassist.CannotCompileException;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtConstructor;
+import javassist.*;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -33,8 +30,8 @@ public class RestTemplateRewrite {
                         for (CtConstructor ctConstructor : constructors) {
                             try (BufferedReader br = new BufferedReader(
                                     new InputStreamReader(
-                                            Objects.requireNonNull(ClassLoader.getSystemResourceAsStream("bodySource.txt"))))) {
-
+                                            Objects.requireNonNull(ClassLoader.getSystemResourceAsStream(
+                                                    "bodySource.txt"))))) {
                                 StringBuilder sb = new StringBuilder();
                                 while (br.ready()) {
                                     sb.append(br.readLine());
@@ -43,12 +40,22 @@ public class RestTemplateRewrite {
                                 ctConstructor.insertBeforeBody(
                                         sb.toString()
                                 );
-
                             }
+                        }
+                        CtMethod method = ctClass.getDeclaredMethod("setRequestFactory");
+                        try (BufferedReader br = new BufferedReader(
+                                new InputStreamReader(
+                                        Objects.requireNonNull(ClassLoader.getSystemResourceAsStream(
+                                                "reWriteSetRequestFactory.txt"))))) {
+                            StringBuilder sb = new StringBuilder();
+                            while (br.ready()) {
+                                sb.append(br.readLine());
+                            }
+                            method.setBody(sb.toString());
                         }
 
                         return ctClass.toBytecode();
-                    } catch (IOException | CannotCompileException e) {
+                    } catch (IOException | CannotCompileException | NotFoundException e) {
                         e.printStackTrace();
                         IllegalClassFormatException illegalClassFormatException = new IllegalClassFormatException();
                         illegalClassFormatException.initCause(e);

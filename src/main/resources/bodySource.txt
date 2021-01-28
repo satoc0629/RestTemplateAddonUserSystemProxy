@@ -1,25 +1,27 @@
-final javax.net.ssl.SSLContext sslContext;
+        final javax.net.ssl.SSLContext sslContext;
         try {
             sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
             javax.net.ssl.TrustManager trustManager =
-                new RestTemplateAddonUserSystemProxy.TrustManagerInstant();
+                    new RestTemplateAddonUserSystemProxy.TrustManagerInstant();
             sslContext.init(null, new javax.net.ssl.TrustManager[]{
                     trustManager
             }, null);
-        } catch (java.security.KeyManagementException e) {
-          throw new java.lang.RuntimeException("sslContext init failed.", e);
-      } catch (java.security.NoSuchAlgorithmException e) {
-          throw new java.lang.RuntimeException("sslContext init failed.", e);
-      }
+        } catch (java.security.KeyManagementException | java.security.NoSuchAlgorithmException e) {
+            throw new java.lang.RuntimeException("sslContext init failed.", e);
+        }
 
         RestTemplateAddonUserSystemProxy.X509HostnameVerifierInstant localHostnameVerifier =
-            new RestTemplateAddonUserSystemProxy.X509HostnameVerifierInstant();
+                new RestTemplateAddonUserSystemProxy.X509HostnameVerifierInstant();
         javax.net.ssl.HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
         javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier(localHostnameVerifier);
 
-        this.setRequestFactory(new org.springframework.http.client.HttpComponentsClientHttpRequestFactory(
-                org.apache.http.impl.client.HttpClientBuilder.create()
+        org.springframework.http.client.HttpComponentsClientHttpRequestFactory requestFactory =
+                new org.springframework.http.client.HttpComponentsClientHttpRequestFactory(
+                        org.apache.http.impl.client.HttpClientBuilder.create()
                         .useSystemProperties()
                         .setSSLContext(sslContext)
                         .build()
-        ));
+        );
+        requestFactory.setBufferRequestBody(true);
+
+        this.setRequestFactory(requestFactory);
