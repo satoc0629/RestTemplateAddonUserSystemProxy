@@ -12,15 +12,18 @@ import java.io.InputStreamReader;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
+import java.nio.file.Files;
 import java.security.ProtectionDomain;
 import java.util.Objects;
 
 public class RestTemplateRewrite {
     public static void premain(String agentArgs, Instrumentation instrumentation) {
+        System.err.println("RestTemplateRewrite premain");
         instrumentation.addTransformer(new ClassFileTransformer() {
             @Override
             public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
                 if (className.equals("org/springframework/web/client/RestTemplate")) {
+                    System.err.println("RestTemplate found 1");
                     ClassPool classPool = ClassPool.getDefault();
                     ByteArrayInputStream stream = new ByteArrayInputStream(classfileBuffer);
                     try {
@@ -30,7 +33,8 @@ public class RestTemplateRewrite {
                         for (CtConstructor ctConstructor : constructors) {
                             try (BufferedReader br = new BufferedReader(
                                     new InputStreamReader(
-                                            Objects.requireNonNull(ClassLoader.getSystemResourceAsStream(
+                                            Objects.requireNonNull(this.getClass().getClassLoader()
+                                                    .getResourceAsStream(
                                                     "bodySource.txt"))))) {
                                 StringBuilder sb = new StringBuilder();
                                 while (br.ready()) {
@@ -40,22 +44,24 @@ public class RestTemplateRewrite {
                                 ctConstructor.insertBeforeBody(
                                         sb.toString()
                                 );
+                            } catch (Throwable e) {
+                                e.printStackTrace();
                             }
                         }
-                        CtMethod method = ctClass.getDeclaredMethod("setRequestFactory");
-                        try (BufferedReader br = new BufferedReader(
-                                new InputStreamReader(
-                                        Objects.requireNonNull(ClassLoader.getSystemResourceAsStream(
-                                                "reWriteSetRequestFactory.txt"))))) {
-                            StringBuilder sb = new StringBuilder();
-                            while (br.ready()) {
-                                sb.append(br.readLine());
-                            }
-                            method.setBody(sb.toString());
-                        }
-
+//                        CtMethod method = ctClass.getDeclaredMethod("setRequestFactory");
+//                        try (BufferedReader br = new BufferedReader(
+//                                new InputStreamReader(
+//                                        Objects.requireNonNull(ClassLoader.getSystemResourceAsStream(
+//                                                "reWriteSetRequestFactory.txt"))))) {
+//                            StringBuilder sb = new StringBuilder();
+//                            while (br.ready()) {
+//                                sb.append(br.readLine());
+//                            }
+//                            method.setBody(sb.toString());
+//                        }
+                        System.err.println("RestTemplate replaced 1");
                         return ctClass.toBytecode();
-                    } catch (IOException | CannotCompileException | NotFoundException e) {
+                    } catch (IOException | CannotCompileException e) {
                         e.printStackTrace();
                         IllegalClassFormatException illegalClassFormatException = new IllegalClassFormatException();
                         illegalClassFormatException.initCause(e);
@@ -68,7 +74,9 @@ public class RestTemplateRewrite {
             @Override
             public byte[] transform(Module module, ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
                 if (className.equals("org/springframework/web/client/RestTemplate")) {
+                    System.err.println("RestTemplate found");
                     ClassPool classPool = ClassPool.getDefault();
+
                     ByteArrayInputStream stream = new ByteArrayInputStream(classfileBuffer);
                     try {
                         CtClass ctClass = classPool.makeClass(stream);
@@ -77,17 +85,21 @@ public class RestTemplateRewrite {
                         for (CtConstructor ctConstructor : constructors) {
                             try (BufferedReader br = new BufferedReader(
                                     new InputStreamReader(
-                                            Objects.requireNonNull(ClassLoader.getSystemResourceAsStream("bodySource.txt"))))) {
+                                            Objects.requireNonNull(this.getClass().getClassLoader()
+                                                    .getResourceAsStream("bodySource.txt"))))) {
 
                                 StringBuilder sb = new StringBuilder();
                                 while (br.ready()) {
                                     sb.append(br.readLine());
                                 }
 
+                                System.err.println("RestTemplate replaced");
                                 ctConstructor.insertBeforeBody(
                                         sb.toString()
                                 );
 
+                            } catch (Throwable e) {
+                                e.printStackTrace();
                             }
                         }
 

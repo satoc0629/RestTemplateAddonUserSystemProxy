@@ -6,7 +6,9 @@
             sslContext.init(null, new javax.net.ssl.TrustManager[]{
                     trustManager
             }, null);
-        } catch (java.security.KeyManagementException | java.security.NoSuchAlgorithmException e) {
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new java.lang.RuntimeException("sslContext init failed.", e);
+        } catch (java.security.KeyManagementException e){
             throw new java.lang.RuntimeException("sslContext init failed.", e);
         }
 
