@@ -12,7 +12,9 @@ public class NewConstructor extends RestTemplate {
             sslContext.init(null, new javax.net.ssl.TrustManager[]{
                     trustManager
             }, null);
-        } catch (java.security.KeyManagementException | java.security.NoSuchAlgorithmException e) {
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new java.lang.RuntimeException("sslContext init failed.", e);
+        } catch (java.security.KeyManagementException e){
             throw new java.lang.RuntimeException("sslContext init failed.", e);
         }
 
@@ -24,10 +26,10 @@ public class NewConstructor extends RestTemplate {
         org.springframework.http.client.HttpComponentsClientHttpRequestFactory requestFactory =
                 new org.springframework.http.client.HttpComponentsClientHttpRequestFactory(
                         org.apache.http.impl.client.HttpClientBuilder.create()
-                        .useSystemProperties()
-                        .setSSLContext(sslContext)
-                        .build()
-        );
+                                .useSystemProperties()
+                                .setSSLContext(sslContext)
+                                .build()
+                );
         requestFactory.setBufferRequestBody(true);
 
         this.setRequestFactory(requestFactory);
