@@ -24,6 +24,8 @@ import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.URI;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -174,9 +176,7 @@ public class RestTemplateRewriteTest {
             sslContext.init(null, new javax.net.ssl.TrustManager[]{
                     trustManager
             }, null);
-        } catch (java.security.KeyManagementException e) {
-            throw new java.lang.RuntimeException("sslContext init failed.", e);
-        } catch (java.security.NoSuchAlgorithmException e) {
+        } catch (KeyManagementException | NoSuchAlgorithmException e) {
             throw new java.lang.RuntimeException("sslContext init failed.", e);
         }
 

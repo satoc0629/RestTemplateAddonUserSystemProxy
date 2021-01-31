@@ -37,7 +37,11 @@ dependencies {
     testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.7.0'
 }
 
+bootJar{
+    enabled false
+}
 jar {
+    enabled true
     manifest.attributes 'Premain-Class': 'RestTemplateAddonUserSystemProxy.RestTemplateRewrite'
     from configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) }
 }

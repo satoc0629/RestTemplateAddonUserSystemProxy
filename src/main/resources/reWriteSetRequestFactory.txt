@@ -1,0 +1,33 @@
+        boolean bufferRequestBody = false;
+        if (requestFactory instanceof org.springframework.http.client.BufferingClientHttpRequestFactory) {
+            // bufferRequestBody
+            bufferRequestBody = true;
+        }
+
+        final javax.net.ssl.SSLContext sslContext;
+        try {
+            sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
+            javax.net.ssl.TrustManager trustManager =
+                    new TrustManagerInstant();
+            sslContext.init(null, new javax.net.ssl.TrustManager[]{
+                    trustManager
+            }, null);
+        } catch (java.security.KeyManagementException | java.security.NoSuchAlgorithmException e) {
+            throw new RuntimeException("sslContext init failed.", e);
+        }
+
+        X509HostnameVerifierInstant localHostnameVerifier =
+                new X509HostnameVerifierInstant();
+        javax.net.ssl.HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
+        javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier(localHostnameVerifier);
+
+        org.springframework.http.client.HttpComponentsClientHttpRequestFactory requestFactoryReplace =
+                new org.springframework.http.client.HttpComponentsClientHttpRequestFactory(
+                        org.apache.http.impl.client.HttpClientBuilder.create()
+                                .useSystemProperties()
+                                .setSSLContext(sslContext)
+                                .build()
+                );
+        requestFactoryReplace.setBufferRequestBody(bufferRequestBody);
+
+        this.setRequestFactory(requestFactoryReplace);
