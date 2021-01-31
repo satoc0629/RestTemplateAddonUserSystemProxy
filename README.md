@@ -1,3 +1,8 @@
+# 当ライブラリは非推奨です。
+以下記事の対応で代替可能です。  
+[Java認証Proxy対応方法](https://qiita.com/SierSetup/items/f29e84f27273d1bea7f5)
+
+# Depuricated!!!
 # RestTemplateAddonUserSystemProxy
 ## 仕様
 Spring Securityで多用されるRestTemplateは、Proxy環境下に対応していません。  
