@@ -3,113 +3,36 @@
  */
 package RestTemplateAddonUserSystemProxy;
 
-import javassist.*;
-
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
-import java.nio.file.Files;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 import java.security.ProtectionDomain;
-import java.util.Objects;
 
 public class RestTemplateRewrite {
     public static void premain(String agentArgs, Instrumentation instrumentation) {
-        System.err.println("RestTemplateRewrite premain");
+        System.err.println("Authenticator.setDefault");
         instrumentation.addTransformer(new ClassFileTransformer() {
             @Override
             public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-                if (className.equals("org/springframework/web/client/RestTemplate")) {
-                    System.err.println("RestTemplate found 1");
-                    ClassPool classPool = ClassPool.getDefault();
-                    ByteArrayInputStream stream = new ByteArrayInputStream(classfileBuffer);
-                    try {
-                        CtClass ctClass = classPool.makeClass(stream);
-
-                        CtConstructor[] constructors = ctClass.getDeclaredConstructors();
-                        for (CtConstructor ctConstructor : constructors) {
-                            try (BufferedReader br = new BufferedReader(
-                                    new InputStreamReader(
-                                            Objects.requireNonNull(this.getClass().getClassLoader()
-                                                    .getResourceAsStream(
-                                                    "bodySource.txt"))))) {
-                                StringBuilder sb = new StringBuilder();
-                                while (br.ready()) {
-                                    sb.append(br.readLine());
-                                }
-
-                                ctConstructor.insertBeforeBody(
-                                        sb.toString()
-                                );
-                            } catch (Throwable e) {
-                                e.printStackTrace();
-                            }
-                        }
-//                        CtMethod method = ctClass.getDeclaredMethod("setRequestFactory");
-//                        try (BufferedReader br = new BufferedReader(
-//                                new InputStreamReader(
-//                                        Objects.requireNonNull(ClassLoader.getSystemResourceAsStream(
-//                                                "reWriteSetRequestFactory.txt"))))) {
-//                            StringBuilder sb = new StringBuilder();
-//                            while (br.ready()) {
-//                                sb.append(br.readLine());
-//                            }
-//                            method.setBody(sb.toString());
-//                        }
-                        System.err.println("RestTemplate replaced 1");
-                        return ctClass.toBytecode();
-                    } catch (IOException | CannotCompileException e) {
-                        e.printStackTrace();
-                        IllegalClassFormatException illegalClassFormatException = new IllegalClassFormatException();
-                        illegalClassFormatException.initCause(e);
-                        throw illegalClassFormatException;
-                    }
-                }
                 return null;
             }
 
             @Override
-            public byte[] transform(Module module, ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-                if (className.equals("org/springframework/web/client/RestTemplate")) {
-                    System.err.println("RestTemplate found");
-                    ClassPool classPool = ClassPool.getDefault();
+            public byte[] transform(Module module, ClassLoader loader, String className, Class<?>
+                    classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws
+                    IllegalClassFormatException {
+                String user = System.getProperty("http.proxyUser");
+                String password = System.getProperty("http.proxyPassword");
 
-                    ByteArrayInputStream stream = new ByteArrayInputStream(classfileBuffer);
-                    try {
-                        CtClass ctClass = classPool.makeClass(stream);
-
-                        CtConstructor[] constructors = ctClass.getDeclaredConstructors();
-                        for (CtConstructor ctConstructor : constructors) {
-                            try (BufferedReader br = new BufferedReader(
-                                    new InputStreamReader(
-                                            Objects.requireNonNull(this.getClass().getClassLoader()
-                                                    .getResourceAsStream("bodySource.txt"))))) {
-
-                                StringBuilder sb = new StringBuilder();
-                                while (br.ready()) {
-                                    sb.append(br.readLine());
-                                }
-
-                                System.err.println("RestTemplate replaced");
-                                ctConstructor.insertBeforeBody(
-                                        sb.toString()
-                                );
-
-                            } catch (Throwable e) {
-                                e.printStackTrace();
-                            }
+                if (user != null && password != null) {
+                    Authenticator.setDefault(new Authenticator() {
+                        protected PasswordAuthentication getPasswordAuthentication() {
+                            return new PasswordAuthentication(user,
+                                    password.toCharArray());
                         }
-
-                        return ctClass.toBytecode();
-                    } catch (IOException | CannotCompileException e) {
-                        e.printStackTrace();
-                        IllegalClassFormatException illegalClassFormatException = new IllegalClassFormatException();
-                        illegalClassFormatException.initCause(e);
-                        throw illegalClassFormatException;
-                    }
+                    });
                 }
                 return null;
             }
